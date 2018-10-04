@@ -1,0 +1,495 @@
+package com.nexiilabs.autolifecycle.releases;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.transaction.Transactional;
+
+import org.springframework.stereotype.Repository;
+
+import com.nexiilabs.autolifecycle.releasephasesmaping.ReleasePhasesmapingModel;
+
+@Transactional
+@Repository
+public class ReleaseDaoImpl implements ReleaseDao {
+	@PersistenceContext
+	private EntityManager entityManager;
+
+	@Override
+	public ResponseDTO addRelease(ReleaseModel releaseModel) {
+		ResponseDTO responseDTO = new ResponseDTO();
+		List<ReleaseListModel> releasePhaseDeafultList=new ArrayList<ReleaseListModel>();
+		ReleasePhasesmapingModel releasePhasesmapingModel = null;
+		ReleaseListModel model=new ReleaseListModel();
+
+		try {
+			boolean check = releaseExistencyCheck(releaseModel); 
+			if(!check){
+				//System.err.println("releaseModel::::::::::::::"+releaseModel.toString());
+				entityManager.persist(releaseModel);
+				
+				if (releaseModel.getReleaseId() != 0) {
+					
+					String query="select rp.release_phase_id,rp.fk_release_phase_type, " + 
+							"rpt.phase_type, rp.release_phase_description from release_phases rp,release_phase_type rpt " + 
+							"where rp.fk_release_phase_type=rpt.phase_type_id and " + 
+							"rp.is_default=1 and rp.delete_status=0;";
+					List list = entityManager.createNativeQuery(query).getResultList();
+					
+
+					if (list.size()>0) {
+				
+						Iterator itr = list.iterator();
+						while (itr.hasNext()) {
+							Object[] obj = (Object[]) itr.next();
+									model=new ReleaseListModel();
+									model.setReleasePhaseID(Integer.parseInt(String.valueOf(obj[0])));
+									model.setPhaseTypeId(Integer.parseInt(String.valueOf(obj[1])));
+									model.setPhaseType(String.valueOf(obj[2]));
+									model.setReleaseDescription(String.valueOf(obj[3]));
+									releasePhaseDeafultList.add(model);
+						}
+					}
+				
+					for (ReleaseListModel releasephaseModel: releasePhaseDeafultList) {
+						releasePhasesmapingModel=new ReleasePhasesmapingModel();
+					    releasePhasesmapingModel.setFk_release_id(releaseModel.getReleaseId());
+					    releasePhasesmapingModel.setFk_release_phase_id(releasephaseModel.getReleasePhaseID());
+					    releasePhasesmapingModel.setFk_release_phase_type_id(releasephaseModel.getPhaseTypeId());
+					    releasePhasesmapingModel.setCreated_by(releaseModel.getCreatedBy());
+					    releasePhasesmapingModel.setDescription(releasephaseModel.getReleaseDescription());
+					    releasePhasesmapingModel.setFk_status_id(1);
+					 
+					   entityManager.persist(releasePhasesmapingModel);
+   
+					}
+					
+					responseDTO.setReleaseId(releaseModel.getReleaseId());
+					responseDTO.setMessage("Release added successfully");
+					responseDTO.setStatusCode(1);
+				} else {
+					responseDTO.setMessage("Release addition Failed");
+					responseDTO.setStatusCode(0);
+				}
+			}
+			else{
+				responseDTO.setMessage("Release Already exists");
+				responseDTO.setStatusCode(2);
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			responseDTO.setStatusCode(0);
+			responseDTO.setMessage(e.getMessage());
+		}
+	
+		return responseDTO;
+	}
+
+	private boolean releaseExistencyCheck(ReleaseModel releaseModel){
+		List list=null;
+		try{
+			Query sql=entityManager.createNativeQuery("select * from product_releases where release_name=:releaseName and fk_product_id=:productId and delete_status=0");
+			sql.setParameter("releaseName", releaseModel.getReleaseName());
+			sql.setParameter("productId", releaseModel.getFkProductId());
+			list=sql.getResultList();
+			if(list.size()>0){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}catch (Exception e) {
+			// TODO: handle exception
+		}
+		return false;
+		
+	}
+	
+	@Override
+	public ResponseDTO updateRelease(ReleaseModel releaseModel) {
+		ResponseDTO responseDTO = new ResponseDTO();
+		int update = 0;
+		try {
+			boolean check = releaseExistencyCheckUpdate(releaseModel); 
+			responseDTO=noChangesFoundForRelease(releaseModel);
+			if(responseDTO.getStatusCode()==1){
+				if(check) {
+				Query hql = entityManager.createQuery(
+						"update ReleaseModel set releaseName=:releaseName,fkProductId=:fkProductId,releaseDateInternal=:releaseDateInternal,"
+								+ "releaseDateExternal=:releaseDateExternal,releaseDescription=:releaseDescription,fkReleaseOwner=:fkReleaseOwner,updatedBy=:updatedBy"
+								+ " ,updatedOn=CURRENT_TIMESTAMP ,fkStatusId=:fkStatusId where  releaseId=:releaseId");
+				hql.setParameter("releaseName", releaseModel.getReleaseName());
+				hql.setParameter("fkProductId", releaseModel.getFkProductId());
+				hql.setParameter("releaseDateInternal", releaseModel.getReleaseDateInternal());
+				hql.setParameter("releaseDateExternal", releaseModel.getReleaseDateExternal());
+				hql.setParameter("releaseDescription", releaseModel.getReleaseDescription());
+				hql.setParameter("fkReleaseOwner", releaseModel.getFkReleaseOwner());
+				hql.setParameter("updatedBy", releaseModel.getUpdatedBy());
+				 hql.setParameter("fkStatusId", releaseModel.getFkStatusId());
+				hql.setParameter("releaseId", releaseModel.getReleaseId());
+				update = hql.executeUpdate();
+				if (update > 0) {
+					responseDTO.setMessage("Release updated successfully");
+					responseDTO.setStatusCode(1);
+				} else {
+					responseDTO.setMessage("Release updation Failed");
+					responseDTO.setStatusCode(0);
+				}
+				}else {
+					responseDTO.setMessage("Release Already exists");
+					responseDTO.setStatusCode(0);
+				}
+			}else{
+				return responseDTO;
+			}
+		} 
+		catch (Exception e) {
+			responseDTO.setStatusCode(0);
+			responseDTO.setMessage("Exception occured");
+		}
+		return responseDTO;
+	}
+	public boolean releaseExistencyCheckUpdate(ReleaseModel releaseModel) {
+		String query = "select * from product_releases pr where pr.release_name='"+releaseModel.getReleaseName()+"' AND pr.fk_product_id='"+releaseModel.getFkProductId()+"' " + 
+				"AND pr.delete_status=0 AND pr.release_id!='"+releaseModel.getReleaseId()+"'";
+		boolean releaseslist = entityManager.createNativeQuery(query).getResultList().isEmpty();
+		if (releaseslist) {
+			return true;
+		}
+		return false;
+	}
+	public ResponseDTO noChangesFoundForRelease(ReleaseModel releaseModel){
+		ResponseDTO response=new ResponseDTO();
+		try{
+			Query query=entityManager.createQuery("from ReleaseModel where releaseName=:releaseName and fkProductId=:fkProductId "
+					+ "and releaseDateInternal=:releaseDateInternal and releaseDateExternal=:releaseDateExternal and releaseDescription=:releaseDescription and"
+					+ " releaseId=:releaseId and fkReleaseOwner=:fkReleaseOwner and deleteStatus=:deleteStatus and fkStatusId=:fkStatusId");
+			query.setParameter("releaseName", releaseModel.getReleaseName());
+			query.setParameter("releaseId", releaseModel.getReleaseId());
+			query.setParameter("fkProductId", releaseModel.getFkProductId());
+			query.setParameter("releaseDateInternal", releaseModel.getReleaseDateInternal());
+			query.setParameter("releaseDateExternal", releaseModel.getReleaseDateExternal());
+			query.setParameter("releaseDescription", releaseModel.getReleaseDescription());
+			query.setParameter("fkReleaseOwner", releaseModel.getFkReleaseOwner());
+			query.setParameter("deleteStatus", 0);
+			query.setParameter("fkStatusId", releaseModel.getFkStatusId());
+			List list=query.getResultList();
+			if(list.size()==0){
+				response.setStatusCode(1);
+				response.setMessage("Changes Found");
+			}else{
+				response.setStatusCode(0);
+				response.setMessage("No Changes Found");
+			}
+			
+		}catch (Exception e) {
+			// TODO: handle exception
+		}
+		return response;
+	}
+	@Override
+	public ResponseDTO deleteRelease(ReleaseModel releaseModel) {
+		ResponseDTO responseDTO = new ResponseDTO();
+		int update = 0;
+		try {
+			boolean check=checkFeaturesUseingReleaseId(releaseModel.getReleaseId());
+			if(check) {
+			Query hql = entityManager
+					.createQuery("update ReleaseModel set deleteStatus=:deleteStatus,deletedBy=:deletedBy"
+							+ " ,deletedOn=CURRENT_TIMESTAMP  where  releaseId=:releaseId");
+			hql.setParameter("deleteStatus", releaseModel.getDeleteStatus());
+			hql.setParameter("deletedBy", releaseModel.getDeletedBy());
+			hql.setParameter("releaseId", releaseModel.getReleaseId());
+			update = hql.executeUpdate();
+			if (update > 0) {
+				responseDTO.setMessage("Release Deleted successfully");
+				responseDTO.setStatusCode(1);
+			} else {
+				responseDTO.setMessage("Release Deletion Failed");
+				responseDTO.setStatusCode(0);
+			}
+			}else {
+				responseDTO.setMessage("Release Have Features First delete The Features And Then Delete Release");
+				responseDTO.setStatusCode(2);
+			}
+		} catch (Exception e) {
+			responseDTO.setStatusCode(0);
+			responseDTO.setMessage(e.getMessage());
+		}
+		// System.err.println("userResponseDTO:::" + responseDTO.toString());
+		return responseDTO;
+	}
+	public boolean checkFeaturesUseingReleaseId(int releaseId) {
+
+		String hql1 = "select f.feature_name,f.feature_id,pr.release_id from product_releases pr,features f where f.fk_release_id=pr.release_id\n" + 
+				" AND pr.release_id='"+releaseId+"' AND pr.delete_status=0 AND f.delete_status=0";
+		boolean isempty = entityManager.createNativeQuery(hql1).getResultList().isEmpty();
+		if (isempty) {
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public List<ReleaseListModel> getReleaseDetails(int releaseId) {
+		List<ReleaseListModel> releaselist = new ArrayList<>();
+		ReleaseListModel model = null;
+		String internalDate[]=null;
+		String externalDate[]=null;
+		try {
+			/*Query hql = entityManager.createNativeQuery("SELECT r.release_id,r.release_name,r.fk_product_id,r.release_date_internal,r.release_date_external" + 
+					",r.release_description,r.fk_release_owner,r.fk_status_id,p.product_name,pl.product_line_name,rs.status ,u.user_name,DATEDIFF(NOW(),r.release_date_external)  "
+					+ " FROM product_releases r, product p,product_line pl,product_release_status rs, product_users pu,users u " + 
+					"where r.delete_status=0 and r.fk_product_id=p.product_id and p.fk_product_line=pl.product_line_id and r.fk_status_id=rs.status_id"
+					+ " and r.fk_release_owner=pu.product_user_id and pu.fk_user_id=u.user_id and r.release_id=:releaseId");*/
+			Query hql = entityManager.createNativeQuery("SELECT r.release_id,r.release_name,r.fk_product_id,r.release_date_internal," + 
+					"r.release_date_external,r.release_description,r.fk_release_owner," + 
+					"r.fk_status_id,p.product_name,pl.product_line_name,rs.status ,u.user_name," + 
+					"DATEDIFF(r.release_date_internal,NOW()),count(f.feature_id),count(if (f.fk_feature_status_id=5,1,null) )as readytoshipped " + 
+					"FROM product_releases r, product p,product_line pl,product_release_status rs, product_users pu,users u,features f " + 
+					"where r.delete_status=0 and r.fk_product_id =p.product_id and p.fk_product_line =pl.product_line_id and r.fk_status_id=rs.status_id " + 
+					"and r.fk_release_owner =pu.product_user_id and pu.fk_user_id=u.user_id " + 
+					"and r.release_id=:releaseId and f.fk_release_id=:releaseId and f.delete_status=0");
+			hql.setParameter("releaseId",releaseId);
+			List<Object> list =   hql.getResultList();
+			if (list.size() > 0) {
+				Iterator itr = list.iterator();
+				while (itr.hasNext()) {
+					Object[] obj = (Object[]) itr.next();
+					model = new ReleaseListModel();
+					internalDate=String.valueOf(obj[3]).split(" ");
+					externalDate=String.valueOf(obj[4]).split(" ");
+					model.setReleaseId(Integer.parseInt(String.valueOf(obj[0])));
+					model.setReleaseName(String.valueOf(obj[1]));
+					model.setFkProductId(Integer.parseInt(String.valueOf(obj[2])));
+					model.setReleaseDateInternal(internalDate[0]);
+					model.setReleaseDateExternal(externalDate[0]);
+					model.setReleaseDescription(String.valueOf(obj[5]));
+					model.setFkReleaseOwner(Integer.parseInt(String.valueOf(obj[6])));
+					model.setFkStatusId(Integer.parseInt(String.valueOf(obj[7])));
+					model.setProductName(String.valueOf(obj[8]));
+					model.setProductLineName(String.valueOf(obj[9]));
+					model.setStatus(String.valueOf(obj[10]));
+					model.setOwner(String.valueOf(obj[11]));
+					model.setDaysCount(String.valueOf(obj[12]));
+					model.setTotalFeaturesCount(Integer.parseInt(String.valueOf(obj[13])));
+					model.setReadyToShipCount(Integer.parseInt(String.valueOf(obj[14])));
+					List<ProductReleaseUploadModel> files = getRleaseFiles(Integer.parseInt(String.valueOf(obj[0])));
+					model.setFiles(files);
+					releaselist.add(model);
+				}
+			}
+		} catch (Exception e) {
+			//e.printStackTrace();
+		}
+		return releaselist;
+		
+	}
+
+	@Override
+	public List<ReleaseListModel> getAllReleases() {
+		List<ReleaseListModel> releaselist = new ArrayList<>();
+		ReleaseListModel model=null;
+		String internalDate[]=null;
+		String externalDate[]=null;
+		try {
+			Query hql = entityManager.createNativeQuery("SELECT r.release_id,r.release_name,r.fk_product_id,r.release_date_internal,r.release_date_external" + 
+					",r.release_description,r.fk_release_owner,r.fk_status_id,p.product_name,pl.product_line_name,rs.status ,u.user_name,DATEDIFF(NOW(),r.release_date_internal) "
+					+ "FROM product_releases r, product p,product_line pl,product_release_status rs, product_users pu,users u " + 
+					"where r.delete_status=0 and r.fk_product_id=p.product_id and p.fk_product_line=pl.product_line_id and r.fk_status_id=rs.status_id"
+					+ " and r.fk_release_owner=pu.product_user_id and pu.fk_user_id=u.user_id");
+			List<Object> list =   hql.getResultList();
+			if (list.size() > 0) {
+				Iterator itr = list.iterator();
+				while (itr.hasNext()) {
+					Object[] obj = (Object[]) itr.next();
+					model = new ReleaseListModel();
+					internalDate=String.valueOf(obj[3]).split(" ");
+					externalDate=String.valueOf(obj[4]).split(" ");
+					model.setReleaseId(Integer.parseInt(String.valueOf(obj[0])));
+					model.setReleaseName(String.valueOf(obj[1]));
+					model.setFkProductId(Integer.parseInt(String.valueOf(obj[2])));
+					model.setReleaseDateInternal(internalDate[0]);
+					model.setReleaseDateExternal(externalDate[0]);
+					model.setReleaseDescription(String.valueOf(obj[5]));
+					model.setFkReleaseOwner(Integer.parseInt(String.valueOf(obj[6])));
+					model.setFkStatusId(Integer.parseInt(String.valueOf(obj[7])));
+					model.setProductName(String.valueOf(obj[8]));
+					model.setProductLineName(String.valueOf(obj[9]));
+					model.setStatus(String.valueOf(obj[10]));
+					model.setOwner(String.valueOf(obj[11]));
+					model.setDaysCount(String.valueOf(obj[12]));
+					List<ProductReleaseUploadModel> files = getRleaseFiles(Integer.parseInt(String.valueOf(obj[0])));
+					model.setFiles(files);
+					releaselist.add(model);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return releaselist;
+	}
+
+	@Override
+	public ResponseDTO addReleaseUploadDetails(ProductReleaseUploadModel uploadModel) {
+		ResponseDTO userResponseDTO = new ResponseDTO();
+		try {
+			entityManager.persist(uploadModel);
+			System.out.println("uploadModel.getPoUploadId():::" + uploadModel.getAttachmentId());
+			if (uploadModel.getAttachmentId() != 0) {
+					userResponseDTO.setStatusCode(1);
+					userResponseDTO.setMessage("Release Upload Details inserted Succesfully");
+				} else {
+					userResponseDTO.setStatusCode(0);
+					userResponseDTO.setMessage("Release Upload Details insertion Failed");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			userResponseDTO.setStatusCode(0);
+			userResponseDTO.setMessage(e.getMessage());
+		}
+		// System.out.println(userResponseDTO.toString());
+		return userResponseDTO;
+	}
+
+	@Override
+	public List<ProductReleaseUploadModel> getRleaseFiles(int fkReleaseId) {
+		ProductReleaseUploadModel model = null;
+		List<ProductReleaseUploadModel> filesList=new ArrayList<>();
+		try {
+			Query hql = entityManager.createNativeQuery("SELECT * FROM product_release_attachments where fk_product_release_id=:releaseId and delete_status=0");
+			hql.setParameter("releaseId", fkReleaseId);
+			List<Object> list =   hql.getResultList();
+			if (list.size() > 0) {
+				Iterator itr = list.iterator();
+				while (itr.hasNext()) {
+					Object[] obj = (Object[]) itr.next();
+					model = new ProductReleaseUploadModel();
+					model.setAttachmentId(Integer.parseInt(String.valueOf(obj[0])));
+					model.setFileType(String.valueOf(obj[1]));
+					model.setFileName(String.valueOf(obj[2]));
+					model.setFileLocation(String.valueOf(obj[3]));
+					model.setFkReleaseId(Integer.parseInt(String.valueOf(obj[11])));
+					filesList.add(model);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return filesList;
+	}
+
+	@Override
+	public ResponseDTO deleteReleaseFiles(ProductReleaseUploadModel productReleaseUploadModel) {
+		ResponseDTO responseDTO = new ResponseDTO();
+		int update = 0;
+		try {
+			Query hql = entityManager
+					.createQuery("update ProductReleaseUploadModel set deleteStatus=1,deletedBy=:deletedBy"
+							+ " ,deletedOn=CURRENT_TIMESTAMP  where  attachmentId=:attachmentId and fkReleaseId=:fkReleaseId");
+			hql.setParameter("attachmentId",productReleaseUploadModel.getAttachmentId() );
+			hql.setParameter("fkReleaseId",productReleaseUploadModel.getFkReleaseId() );
+			hql.setParameter("deletedBy", productReleaseUploadModel.getDeletedBy());
+			update = hql.executeUpdate();
+			if (update > 0) {
+				responseDTO.setMessage("File Deleted successfully");
+				responseDTO.setStatusCode(1);
+			} else {
+				responseDTO.setMessage("File Deletion Failed");
+				responseDTO.setStatusCode(0);
+			}
+		} catch (Exception e) {
+			responseDTO.setStatusCode(0);
+			responseDTO.setMessage(e.getMessage());
+		}
+		return responseDTO;
+	}
+	@Override
+	public ReleaseListModel getReleaseDetailsForCopy(ReleaseListModel releaseListModel) {
+		ReleaseListModel model = null;
+		try {
+			Query hql = entityManager.createNativeQuery("SELECT r.release_id,r.release_name,r.fk_product_id,r.release_date_internal,r.release_date_external" + 
+					",r.release_description,r.fk_release_owner,r.fk_status_id,p.product_name FROM product_releases r,product p " + 
+					" where r.delete_status=0 and r.fk_product_id=p.product_id and release_id=:releaseId");
+			hql.setParameter("releaseId",releaseListModel.getReleaseId());
+			List<Object> list =   hql.getResultList();
+			if (list.size() > 0) {
+				Iterator itr = list.iterator();
+				while (itr.hasNext()) {
+					Object[] obj = (Object[]) itr.next();
+					model = new ReleaseListModel();
+					model.setReleaseId(Integer.parseInt(String.valueOf(obj[0])));
+					model.setReleaseName(String.valueOf(obj[1]));
+					model.setFkProductId(Integer.parseInt(String.valueOf(obj[2])));
+					model.setReleaseDateInternal(String.valueOf(obj[3]));
+					model.setReleaseDateExternal(String.valueOf(obj[4]));
+					model.setReleaseDescription(String.valueOf(obj[5]));
+					model.setFkReleaseOwner(Integer.parseInt(String.valueOf(obj[6])));
+					model.setFkStatusId(Integer.parseInt(String.valueOf(obj[7])));
+					model.setProductName(String.valueOf(obj[8]));
+					List<ProductReleaseUploadModel> files = getRleaseFiles(releaseListModel.getReleaseId());
+					model.setFiles(files);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return model;
+	}
+	@Override
+	public ResponseDTO updateStatus(int releaseId, int statusId) {
+		ResponseDTO responseDTO = new ResponseDTO();
+		int update = 0;
+		try {
+				Query hql = entityManager.createQuery(
+						"update ReleaseModel set updatedOn=CURRENT_TIMESTAMP ,fkStatusId=:fkStatusId where  releaseId=:releaseId");
+				hql.setParameter("fkStatusId", statusId);
+				hql.setParameter("releaseId", releaseId);
+				update = hql.executeUpdate();
+				if (update > 0) {
+					responseDTO.setMessage("Release Status updated successfully");
+					responseDTO.setStatusCode(1);
+				} else {
+					responseDTO.setMessage("Release updation Failed");
+					responseDTO.setStatusCode(0);
+				}
+		} 
+		catch (Exception e) {
+			responseDTO.setStatusCode(0);
+			responseDTO.setMessage("Exception occured");
+		}
+		return responseDTO;
+	}
+
+	@Override
+	public List<ReleaseListModel> getAllReleasesStatus() {
+		// TODO Auto-generated method stub
+		List<ReleaseListModel> releaseList = new ArrayList<>();
+		ReleaseListModel model = null;
+		try {
+			String query = "SELECT prs.status_id,prs.status FROM product_release_status prs where prs.delete_status=0;";
+
+			List<Object> list = entityManager.createNativeQuery(query).getResultList();
+			if (!list.isEmpty()) {
+				Iterator iterator = list.iterator();
+				Iterator itr = list.iterator();
+				while (itr.hasNext()) {
+					Object[] obj = (Object[]) itr.next();
+					model = new ReleaseListModel();
+					model.setFkStatusId(Integer.parseInt(String.valueOf(obj[0])));
+					model.setStatus(String.valueOf(obj[1]));
+				
+					releaseList.add(model);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return releaseList;
+	}
+}

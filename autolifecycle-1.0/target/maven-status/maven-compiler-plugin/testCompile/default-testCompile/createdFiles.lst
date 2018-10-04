@@ -1,0 +1,9 @@
+com\nexiilabs\autolifecycle\resources\test\ProductAttachmentUploadTest.class
+com\nexiilabs\autolifecycle\productline\test\TestProductLineLogoController.class
+com\nexiilabs\autolifecycle\resources\test\ProductLineAttachmentUploadTest.class
+com\nexiilabs\autolifecycle\productline\test\Testproductlinecontroller.class
+com\nexiilabs\autolifecycle\jira\test\JiraExportTest.class
+com\nexiilabs\autolifecycle\jira\test\TestJiraImportController.class
+com\nexiilabs\autolifecycle\resources\test\ReleaseAttachmentUploadTest.class
+com\nexiilabs\autolifecycle\product\test\Testproductcontroller.class
+com\nexiilabs\autolifecycle\product\test\TestProductLogoController.class

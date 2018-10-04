@@ -1,0 +1,102 @@
+package com.nexiilabs.autolifecycle.jira;
+
+import java.util.Date;
+import java.util.List;
+
+import com.nexiilabs.autolifecycle.features.FeaturesModel;
+import com.nexiilabs.autolifecycle.product.Product;
+import com.nexiilabs.autolifecycle.productline.Response;
+import com.nexiilabs.autolifecycle.releases.ReleaseListModel;
+import com.nexiilabs.autolifecycle.releases.ReleaseModel;
+import com.nexiilabs.autolifecycle.releases.ResponseDTO;
+
+public interface JiraService {
+
+	JiraConfigurationModel getJiraCredentialsByUserId(int fk_user_id);
+
+	Response addJiraCredentials(String username, String password, String url, int fk_user_id);
+
+	List<JiraConfigurationModel> getJiraDetails(int fk_user_id);
+
+	Response updateJiraCredentials(String username, String password, String url, int fk_user_id,
+			int jira_configuration_id);
+
+	List<Response> addIssues(List<ImportBacklogModel> backLogsModel, int product_id, int release_Id, int sprintId, String releaseName, String jira_sprintName, long fk_jira_boardid, String fk_jira_projectid, String jiraprojectName, String jiraBoardName);
+
+	List<Response> addIssuesOfEpic(List<ImportBacklogModel> backLogsModel, long epicId, String epicName, String epicKey,
+			long boardId, String boardName);
+
+	List<FeatureJiraMetaDataModel> listOfBacklogsofBoard(int fk_feature_id, long boardId);
+
+	List<FeatureJiraMetaDataModel> listOfImportedIssuesofSprint(int fk_feature_id, long boardId, long sprintId);
+
+	List<FeatureJiraMetaDataModel> listOfImportedIssuesofEpic(int fk_feature_id, long boardId, long epicId);
+
+	boolean isUserNotExist(int fk_user_id);
+
+	List<Product> productConfigurationwithJiraProject(String productName, int fk_product_line);
+
+	List<BoardModel> mergeProjectsandBoards(List<BoardModel> boardModel);
+
+	Response boardassignedtoAutoProduct(int product_id, int boardId, String projectName, String projectId, String boardName);
+
+	List<Response> addBackLogs(List<ImportBacklogModel> backLogsModel, int product_id, int fk_user_id, String boardName, String projectName, long boardId, String projectId);
+
+	List<SprintModel> getListOfUnassignedSprints(List<SprintModel> sprintModel, int product_id);
+
+	Response assignSprinttoRelease(int product_id, int sprintId, String sprintName, int release_Id);
+
+	List<JiraReleaseSprintDTO> getProductReleaseofJiraByReleaseId(int release_Id);
+
+	List<Product> getproductConfigurationwithJiraProject(int product_id);
+
+	Product getProductDetailsInAuto(int productId);
+
+	List<ReleaseListModel> unMappedReleasesList();
+
+	ReleaseModel getReleaseDetailsInAuto(int releaseId);
+	
+	List<BackLogsModel> listofnotassignedIssuesofSprintforReleaseMapping(List<BackLogsModel> issues, int release_Id);
+
+	Response issueassignedtoAutoFeature(int product_id, int release_Id, int feature_Id, long issueId, String jiraIssueType);
+
+	List<FeaturesModel> isFeatureNameAlreadyConfigurewithJiraIssue(String featureName, int release_Id);
+
+	List<ReleaseModel> isreleaseConfigurationwithJiraSprint(String releaseName);
+
+	List<FeaturesModel> isFeatureConfigurationwithJiraSprintIssue(int release_Id, String feature_name);
+
+	FeaturesModel getFeatureDetails(int featureId);
+	
+	Response syncJiraBoardToAutoProduct(int productId,long boardId,String boardName,String projectName);
+	
+	Response syncJiraSprintToAutoRelease(int releaseId,long sprintId,long boardId,String sprintName);
+
+	boolean getIssueExistencyinDatabase(long issueId);
+
+	List<ReleaseListModel> mappedReleasesList();
+	List<BackLogsModel> listofnotassignedIssuesofSprintforReleaseMapping(List<BackLogsModel> issues, int release_Id, int fk_feature_type_id);
+	String getJiraIssueTypeName(int fk_feature_type_id);
+
+	FeaturesModel getJiraIssueDetailsByFeatureId(int feature_id);
+
+	Response syncJiraIssuesToAutoFeature(int feature_id, BackLogsModel bm);
+
+	int isSprintAlreadyExist(int productId, long sprintId, long boardIdofSprint, int fk_user_id, String sprintname);
+
+	ResponseDTO assignFullDetailsofSprinttoRelease(int productId, long sprintId, String sprintName,
+			int sprintExistanceByReleaseId, Date date, Date date2, int fk_user_id, SprintModel sm);
+
+	List<Product> getproductDetailsByProductId(int product_id);
+
+	List<JiraReleaseSprintDTO> getReleaseDetailsByReleaseId(int release_Id);
+
+	int isIssueExistanceByFeatureId(int productId, int fk_user_id, int releaseId, long issueid, BackLogsModel b);
+	int getFeatureTypeIdbyIssueType(long l);
+	int getFeatureStatusIdbyIssueStatus(int issueStatusId);
+	int getUserIdbyJiraEmail(String issueCreaterEmail);
+
+	ResponseDTO assignFullDetailsofIssuetoExistFeature(BackLogsModel b, int productId, int releaseId, int fk_user_id,
+			int issueExistanceByFeatureId);
+
+}

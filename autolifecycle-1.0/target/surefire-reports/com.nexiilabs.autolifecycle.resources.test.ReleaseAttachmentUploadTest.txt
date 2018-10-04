@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.nexiilabs.autolifecycle.resources.test.ReleaseAttachmentUploadTest
+-------------------------------------------------------------------------------
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 30.218 sec - in com.nexiilabs.autolifecycle.resources.test.ReleaseAttachmentUploadTest

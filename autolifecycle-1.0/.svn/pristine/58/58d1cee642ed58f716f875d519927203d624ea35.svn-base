@@ -1,0 +1,361 @@
+package com.nexiilabs.autolifecycle.jira;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.nexiilabs.autolifecycle.features.FeaturesModel;
+import com.nexiilabs.autolifecycle.product.Product;
+import com.nexiilabs.autolifecycle.productline.Response;
+import com.nexiilabs.autolifecycle.releases.ReleaseListModel;
+import com.nexiilabs.autolifecycle.releases.ReleaseModel;
+import com.nexiilabs.autolifecycle.releases.ResponseDTO;
+
+@Service
+public class JiraServiceImpl implements JiraService {
+	@Autowired
+	JiraRepository repository;
+
+	@Override
+	public JiraConfigurationModel getJiraCredentialsByUserId(int fk_user_id) {
+
+		return repository.getJiraCredentialsByUserId(fk_user_id);
+	}
+
+	/*
+	 * @Override public Response addJiraCredentials(String username, String
+	 * password, String url) {
+	 * 
+	 * return repository.addJiraCredentials(username,password,url); }
+	 */
+
+	@Override
+	public Response addJiraCredentials(String username, String password, String url, int fk_user_id) {
+		// TODO Auto-generated method stub
+		return repository.addJiraCredentials(username, password, url, fk_user_id);
+	}
+
+	@Override
+	public List<JiraConfigurationModel> getJiraDetails(int fk_user_id) {
+		// TODO Auto-generated method stub
+		return repository.getJiraDetails(fk_user_id);
+	}
+
+	@Override
+	public Response updateJiraCredentials(String username, String password, String url, int fk_user_id,
+			int jira_configuration_id) {
+
+		return repository.updateJiraCredentials(username, password, url, fk_user_id, jira_configuration_id);
+	}
+
+	@Override
+	public List<Response> addIssues(List<ImportBacklogModel> backLogsModel, int product_id, int release_Id,
+			int sprintId, String releaseName, String jira_sprintName, long fk_jira_boardid, String fk_jira_projectid,
+			String jiraprojectName, String jiraBoardName) {
+
+		return repository.addIssues(backLogsModel, product_id, release_Id, sprintId, releaseName, jira_sprintName,
+				fk_jira_boardid, fk_jira_projectid, jiraprojectName, jiraBoardName);
+	}
+
+	@Override
+	public List<Response> addIssuesOfEpic(List<ImportBacklogModel> backLogsModel, long epicId, String epicName,
+			String epicKey, long boardId, String boardName) {
+
+		return repository.addIssuesOfEpic(backLogsModel, epicId, epicName, epicKey, boardId, boardName);
+	}
+
+	@Override
+	public List<FeatureJiraMetaDataModel> listOfBacklogsofBoard(int fk_feature_id, long boardId) {
+
+		return repository.listOfBacklogsofBoard(fk_feature_id, boardId);
+	}
+
+	@Override
+	public List<FeatureJiraMetaDataModel> listOfImportedIssuesofSprint(int fk_feature_id, long boardId, long sprintId) {
+
+		return repository.listOfImportedIssuesofSprint(fk_feature_id, boardId, sprintId);
+	}
+
+	@Override
+	public List<FeatureJiraMetaDataModel> listOfImportedIssuesofEpic(int fk_feature_id, long boardId, long epicId) {
+		// TODO Auto-generated method stub
+		return repository.listOfImportedIssuesofEpic(fk_feature_id, boardId, epicId);
+	}
+
+	@Override
+	public boolean isUserNotExist(int fk_user_id) {
+		// TODO Auto-generated method stub
+		return repository.isUserNotExist(fk_user_id);
+	}
+
+	@Override
+	public List<Product> productConfigurationwithJiraProject(String productName, int fk_product_line) {
+		// TODO Auto-generated method stub
+		return repository.productConfigurationwithJiraProject(productName, fk_product_line);
+	}
+
+	@Override
+	public List<BoardModel> mergeProjectsandBoards(List<BoardModel> boardModel) {
+		// TODO Auto-generated method stub
+		return repository.mergeProjectsandBoards(boardModel);
+	}
+
+	@Override
+	public Response boardassignedtoAutoProduct(int product_id, int boardId, String projectName, String projectId,
+			String boardName) {
+		// TODO Auto-generated method stub
+		return repository.boardassignedtoAutoProduct(product_id, boardId, projectName, projectId, boardName);
+	}
+
+	@Override
+	public List<Response> addBackLogs(List<ImportBacklogModel> backLogsModel, int product_id, int fk_user_id,
+			String boardName, String projectName, long boardId, String projectId) {
+		// TODO Auto-generated method stub
+		return repository.addBackLogs(backLogsModel, product_id, fk_user_id, boardName, projectName, boardId,
+				projectId);
+	}
+
+	@Override
+	public List<SprintModel> getListOfUnassignedSprints(List<SprintModel> sprintModel, int product_id) {
+		// TODO Auto-generated method stub
+		return repository.getListOfUnassignedSprints(sprintModel, product_id);
+	}
+
+	@Override
+	public Response assignSprinttoRelease(int product_id, int sprintId, String sprintName, int release_Id) {
+		// TODO Auto-generated method stub
+		return repository.assignSprinttoRelease(product_id, sprintId, sprintName, release_Id);
+	}
+
+	@Override
+	public List<JiraReleaseSprintDTO> getProductReleaseofJiraByReleaseId(int release_Id) {
+		// TODO Auto-generated method stub
+		return repository.getProductReleaseofJiraByReleaseId(release_Id);
+	}
+
+	@Override
+	public List<Product> getproductConfigurationwithJiraProject(int product_id) {
+		// TODO Auto-generated method stub
+		return repository.getproductConfigurationwithJiraProject(product_id);
+	}
+
+	@Override
+	public Product getProductDetailsInAuto(int productId) {
+		// TODO Auto-generated method stub
+		return repository.getProductDetailsInAuto(productId);
+	}
+
+	@Override
+	public List<ReleaseListModel> unMappedReleasesList() {
+		// TODO Auto-generated method stub
+		return repository.getUnmappedReleasesList();
+	}
+
+	@Override
+	public ReleaseModel getReleaseDetailsInAuto(int releaseId) {
+		// TODO Auto-generated method stub
+		return repository.getReleaseDetailsInAuto(releaseId);
+	}
+
+	@Override
+	public List<BackLogsModel> listofnotassignedIssuesofSprintforReleaseMapping(List<BackLogsModel> issues,
+			int release_Id) {
+		// TODO Auto-generated method stub
+		return repository.listofnotassignedIssuesofSprintforReleaseMapping(issues, release_Id);
+	}
+
+	@Override
+	public Response issueassignedtoAutoFeature(int product_id, int release_Id, int feature_Id, long issueId,
+			String jiraIssueType) {
+		// TODO Auto-generated method stub
+		return repository.issueassignedtoAutoFeature(product_id, release_Id, feature_Id, issueId, jiraIssueType);
+	}
+
+	@Override
+	public List<FeaturesModel> isFeatureNameAlreadyConfigurewithJiraIssue(String featureName, int release_Id) {
+		// TODO Auto-generated method stub
+		return repository.isFeatureNameAlreadyConfigurewithJiraIssue(featureName, release_Id);
+	}
+
+	@Override
+	public List<ReleaseModel> isreleaseConfigurationwithJiraSprint(String releaseName) {
+		// TODO Auto-generated method stub
+		return repository.isreleaseConfigurationwithJiraSprint(releaseName);
+	}
+
+	@Override
+	public List<FeaturesModel> isFeatureConfigurationwithJiraSprintIssue(int release_Id, String feature_name) {
+		// TODO Auto-generated method stub
+		return repository.isFeatureConfigurationwithJiraSprintIssue(release_Id, feature_name);
+	}
+
+	@Override
+	public FeaturesModel getFeatureDetails(int featureId) {
+		// TODO Auto-generated method stub
+		return repository.getFeatureDetails(featureId);
+	}
+
+	@Override
+	public Response syncJiraBoardToAutoProduct(int productId, long boardId, String boardName, String projectName) {
+		// TODO Auto-generated method stub
+		return repository.syncJiraBoardToAutoProduct(productId, boardId, boardName, projectName);
+	}
+
+	@Override
+	public Response syncJiraSprintToAutoRelease(int releaseId, long sprintId, long boardId, String sprintName) {
+		// TODO Auto-generated method stub
+		return repository.syncJiraSprintToAutoRelease(releaseId, sprintId, boardId, sprintName);
+	}
+
+	@Override
+	public boolean getIssueExistencyinDatabase(long issueId) {
+		return repository.getIssueExistencyinDatabase(issueId);
+	}
+
+	@Override
+	public List<ReleaseListModel> mappedReleasesList() {
+		return repository.mappedReleasesList();
+	}
+
+	@Override
+	public List<BackLogsModel> listofnotassignedIssuesofSprintforReleaseMapping(List<BackLogsModel> issues,
+			int release_Id, int fk_feature_type_id) {
+		// TODO Auto-generated method stub
+		return repository.listofnotassignedIssuesofSprintforReleaseMapping(issues, release_Id, fk_feature_type_id);
+	}
+
+	@Override
+	public String getJiraIssueTypeName(int fk_feature_type_id) {
+		// TODO Auto-generated method stub
+		return repository.getJiraIssueTypeName(fk_feature_type_id);
+	}
+
+	@Override
+	public FeaturesModel getJiraIssueDetailsByFeatureId(int feature_id) {
+		// TODO Auto-generated method stub
+		return repository.getJiraIssueDetailsByFeatureId(feature_id);
+	}
+
+	@Override
+	public Response syncJiraIssuesToAutoFeature(int feature_id, BackLogsModel bm) {
+		// TODO Auto-generated method stub
+		return repository.syncJiraIssuesToAutoFeature(feature_id, bm);
+	}
+
+	@Override
+	public int isSprintAlreadyExist(int productId, long sprintId, long boardIdofSprint, int fk_user_id,
+			String sprintname) {
+		// TODO Auto-generated method stub
+		return repository.isSprintAlreadyExist(productId, sprintId, boardIdofSprint, fk_user_id, sprintname);
+	}
+
+	@Override
+	public ResponseDTO assignFullDetailsofSprinttoRelease(int productId, long sprintId, String sprintName,
+			int sprintExistanceByReleaseId, Date sprintstartDate, Date sprintendDate, int fk_user_id,SprintModel sm) {
+		// TODO Auto-generated method stub
+		return repository.assignFullDetailsofSprinttoRelease(productId, sprintId, sprintName,
+				sprintExistanceByReleaseId, sprintstartDate, sprintendDate, fk_user_id,sm);
+	}
+
+	@Override
+	public List<Product> getproductDetailsByProductId(int product_id) {
+		// TODO Auto-generated method stub
+		return repository.getproductDetailsByProductId(product_id);
+	}
+
+	@Override
+	public List<JiraReleaseSprintDTO> getReleaseDetailsByReleaseId(int release_Id) {
+		// TODO Auto-generated method stub
+		return repository.getReleaseDetailsByReleaseId(release_Id);
+	}
+
+	@Override
+	public int isIssueExistanceByFeatureId(int productId, int fk_user_id, int releaseId, long issueid,
+			BackLogsModel b) {
+		// TODO Auto-generated method stub
+		return repository.isIssueExistanceByFeatureId(productId,fk_user_id,releaseId,issueid,b);
+	}
+
+	@Override
+	public int getFeatureTypeIdbyIssueType(long l) {
+		// TODO Auto-generated method stub
+		return repository.getFeatureTypeIdbyIssueType(l);
+	}
+
+	@Override
+	public int getFeatureStatusIdbyIssueStatus(int issueStatusId) {
+		// TODO Auto-generated method stub
+		return repository.getFeatureStatusIdbyIssueStatus(issueStatusId);
+	}
+
+	@Override
+	public int getUserIdbyJiraEmail(String issueCreaterEmail) {
+		// TODO Auto-generated method stub
+		return repository.getUserIdbyJiraEmail(issueCreaterEmail);
+	}
+
+	@Override
+	public ResponseDTO assignFullDetailsofIssuetoExistFeature(BackLogsModel b, int productId, int releaseId,
+			int fk_user_id, int issueExistanceByFeatureId) {
+		// TODO Auto-generated method stub
+		return repository.assignFullDetailsofIssuetoExistFeature(b,productId,releaseId,fk_user_id,issueExistanceByFeatureId);
+	}
+
+	@Override
+	public List<ReleaseModel> getReleaseDetailsInAutoByProductId(int productId) {
+		// TODO Auto-generated method stub
+		return repository.getReleaseDetailsInAutoByProductId(productId);
+	}
+
+	@Override
+	public List<FeaturesModel> getFeatureDetailsByReleaseId(int releaseId) {
+		// TODO Auto-generated method stub
+		return repository.getFeatureDetailsByReleaseId(releaseId);
+	}
+
+	@Override
+	public String assigneeByAssigneeId(int assigned_To) {
+		// TODO Auto-generated method stub
+		return repository.assigneeByAssigneeId(assigned_To);
+	}
+
+	@Override
+	public String getJira_issue_typebyFeatureTypeId(int fk_feature_type_id) {
+		// TODO Auto-generated method stub
+		return repository.getJira_issue_typebyFeatureTypeId(fk_feature_type_id);
+	}
+
+	@Override
+	public int releasestatusidBySprintStatus(String sprintStatus) {
+		// TODO Auto-generated method stub
+		return repository.releasestatusidBySprintStatus(sprintStatus);
+	}
+
+	@Override
+	public ResponseDTO assignFullDetailsofSprinttoReleaseAsClosedSprint(int productId, long sprintId, String sprintName,
+			int sprintExistanceByReleaseId, Date startDate, Date endDate, int fk_user_id, SprintModel sm) {
+		// TODO Auto-generated method stub
+		return repository.assignFullDetailsofSprinttoReleaseAsClosedSprint(productId,sprintId,sprintName,
+				sprintExistanceByReleaseId,startDate,endDate,fk_user_id,sm);
+	}
+
+	@Override
+	public int releaseIdBySprintIdAsClosedStatus(long sprintId, SprintModel sm,int productId) {
+		// TODO Auto-generated method stub
+		return repository.releaseIdBySprintIdAsClosedStatus(sprintId,sm,productId);
+	}
+
+	@Override
+	public int updateFeaturesStatusAsDone(FeaturesModel fm, int releaseIdBySprintId,int productId) {
+		// TODO Auto-generated method stub
+		return repository.updateFeaturesStatusAsDone(fm,releaseIdBySprintId,productId);
+	}
+
+	@Override
+	public int updatefeaturesasbacklogs(BackLogsModel bl, int productId) {
+		// TODO Auto-generated method stub
+		return repository.updatefeaturesasbacklogs(bl,productId);
+	}
+}
